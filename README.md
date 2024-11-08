@@ -1,9 +1,9 @@
-# YoloProto
-A Leptos-based Rust project with Keplr wallet integration.
+# YoloDash
+A Leptos-based Rust project with Shade API integration.
 
 ## Features
-- Dark background and gold text
-- Top bar with "YoloProto" and "Connect Wallet" button
+- YoloNode Theme
+- Top bar with "YoloDash" and "Connect Wallet" button
 - Keplr wallet connectivity
 
 ## Setup
@@ -15,13 +15,12 @@ A Leptos-based Rust project with Keplr wallet integration.
 
 ## Manual Steps if you dont want to use the build.sh
 1. Clone the repository and navigate to the directory.
-2. Navigate to the project root directory
-3. Run: trunk build --release 
-4. Run: cargo build --release --target wasm32-unknown-unknown
-5. Run: wasm-bindgen --out-dir dist/pkg --target web target/wasm32-unknown-unknown/release/yoloproto.wasm
-6. Run: mkdir -p dist/static
-7. Run: cp static/* dist/static
-8. To test Locall: python3 -m http.server --bind 127.0.0.1
-9. Push to github with pages setup
+2. Run: trunk build --release 
+3. Run: cargo build --release --target wasm32-unknown-unknown
+4. Run: wasm-bindgen --out-dir dist/pkg --target web target/wasm32-unknown-unknown/release/yolodash.wasm
+5. Run: mkdir -p dist/static
+6. Run: cp static/* dist/static
+7. To test Locall: python3 -m http.server --bind 127.0.0.1
+8. Push to github with pages setup
 
 

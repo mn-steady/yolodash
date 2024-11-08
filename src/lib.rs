@@ -1,35 +1,31 @@
 use leptos::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
-use js_sys::{Promise, Reflect, Function};
 use wasm_bindgen::JsValue;
 
-// Helper function to call JavaScript functions on the `window` object
-fn call_js_function(function_name: &str) -> Result<Function, JsValue> {
-    let window = web_sys::window().expect("no global `window` exists");
-    let func = Reflect::get(&window, &JsValue::from_str(function_name))?;
-    func.dyn_into::<Function>()
+// Bind the JavaScript function get_wallet_address using wasm_bindgen
+#[wasm_bindgen(module = "/static/wallet.js")]
+extern "C" {
+    #[wasm_bindgen]
+    async fn get_wallet_address() -> JsValue;
 }
 
-// Call specific JavaScript functions
-async fn get_wallet_address() -> Option<String> {
-    if let Ok(js_func) = call_js_function("get_wallet_address") {
-        if let Ok(promise) = js_func.call0(&web_sys::window().unwrap()).and_then(|val| val.dyn_into::<Promise>()) {
-            if let Ok(js_value) = wasm_bindgen_futures::JsFuture::from(promise).await {
-                return js_value.as_string();
-            }
+// Fetch wallet address asynchronously
+async fn fetch_wallet_address(set_wallet_address: WriteSignal<String>) {
+    web_sys::console::log_1(&"Calling get_wallet_address...".into());
+    match get_wallet_address().await.as_string() {
+        Some(address) => {
+            web_sys::console::log_1(&format!("Wallet address: {}", address).into());
+            set_wallet_address.set(address);
+        }
+        None => {
+            web_sys::console::log_1(&"Failed to load wallet address".into());
+            set_wallet_address.set("Failed to load wallet address".to_string());
         }
     }
-    None
 }
 
-fn disconnect_keplr_wallet() {
-    if let Ok(js_func) = call_js_function("disconnectKeplrWallet") {
-        js_func.call0(&web_sys::window().unwrap()).ok();
-    }
-}
-
-// Function to fetch and SHD price from Oracle contract
+// Function to fetch the SHD price from the Oracle contract
 async fn fetch_shd_price(set_shd_price: WriteSignal<String>) {
     let window = web_sys::window().expect("no global `window` exists");
     let func = js_sys::Reflect::get(&window, &JsValue::from_str("fetchSHDPrice"))
@@ -58,46 +54,20 @@ async fn fetch_shd_price(set_shd_price: WriteSignal<String>) {
     }
 }
 
-// Function to fetch and set the STKD viewing key
-async fn fetch_stkd_viewing_key(set_stkd_viewing_key: WriteSignal<String>, wallet_address: String) {
-    if let Ok(js_func) = call_js_function("getSTKDViewingKey") {
-        let promise = js_func.call1(&JsValue::NULL, &JsValue::from_str(&wallet_address)).unwrap();
-        match wasm_bindgen_futures::JsFuture::from(promise.dyn_into::<js_sys::Promise>().unwrap()).await {
-            Ok(key) => {
-                if let Some(viewing_key) = key.as_string() {
-                    set_stkd_viewing_key.set(viewing_key);
-                } else {
-                    set_stkd_viewing_key.set("Viewing key unavailable".to_string());
-                }
-            }
-            Err(err) => {
-                web_sys::console::error_1(&err);
-                set_stkd_viewing_key.set("Error retrieving STKD viewing key".to_string());
-            }
-        }
-    }
-}
-
 // The main app component
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
     let (is_connected, set_connected) = create_signal(cx, false);
     let (wallet_address, set_wallet_address) = create_signal(cx, String::from("Not connected"));
     let (shd_price, set_shd_price) = create_signal(cx, String::from("Loading SHD price..."));
-    let (stkd_viewing_key, set_stkd_viewing_key) = create_signal(cx, String::from("Fetching STKD viewing key..."));
-    let (selected_section, set_selected_section) = create_signal(cx, "Home".to_string());
+    let (selected_section, set_selected_section) = create_signal(cx, "Shade".to_string());
 
     let connect_wallet = move |_| {
         set_connected.set(true);
-        spawn_local(async move {
-            if let Some(address) = get_wallet_address().await {
-                set_wallet_address.set(address);
-            }
-        });
+        spawn_local(fetch_wallet_address(set_wallet_address.clone()));
     };
 
     let disconnect_wallet = move |_| {
-        disconnect_keplr_wallet();
         set_connected.set(false);
         set_wallet_address.set(String::from("Not connected"));
     };
@@ -106,20 +76,12 @@ pub fn App(cx: Scope) -> impl IntoView {
         spawn_local(fetch_shd_price(set_shd_price.clone()));
     };
 
-    // Check STKD viewing key when in "Keplr" view
-    let fetch_stkd_key = move |_| {
-        let wallet_address = wallet_address.get();
-        if !wallet_address.is_empty() && wallet_address != "Not connected" {
-            spawn_local(fetch_stkd_viewing_key(set_stkd_viewing_key.clone(), wallet_address.to_string()));
-        }
-    };
-
     // UI with views
     view! {
         cx,
         <div class="container">
             <div class="top-bar">
-                <a href="https://yoloproto.com" class="logo">"YoloProto"</a>
+                <a href="https://yolodash.com" class="logo">"YoloDash"</a>
                 {move || if is_connected.get() {
                     view! { cx,
                         <button class="connect-wallet" on:click=disconnect_wallet>
@@ -138,7 +100,6 @@ pub fn App(cx: Scope) -> impl IntoView {
             <div class="links-wallet-container">
                 <div class="links">
                     <button class="link-button" on:click=move |_| set_selected_section.set("Home".to_string())>"Home"</button>
-                    <button class="link-button" on:click=move |_| set_selected_section.set("Keplr".to_string())>"Keplr"</button>
                     <button class="link-button" on:click=move |_| set_selected_section.set("Shade".to_string())>"Shade"</button>
                 </div>
                 <div class="wallet-address">
@@ -159,13 +120,6 @@ pub fn App(cx: Scope) -> impl IntoView {
                 view! { cx, 
                     <div>
                         <img src="./static/mn-steady.png" class="main-page-image" alt="Main Page Image" />
-                    </div>
-                }
-            } else if selected_section.get() == "Keplr" {
-                view! { cx, 
-                    <div class="section-content">
-                        <button on:click=fetch_stkd_key>"Get STKD Viewing Key"</button>
-                        <div>"STKD Viewing Key: " {stkd_viewing_key.get()}</div>
                     </div>
                 }
             } else {

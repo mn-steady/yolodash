@@ -1,9 +1,4 @@
-// src/shade-import.js
 import { queryPrice } from '@shadeprotocol/shadejs';
-import { SecretNetworkClient } from 'secretjs';
-
-// Attach SecretNetworkClient to `window` for global access
-window.SecretNetworkClient = SecretNetworkClient;
 
 window.fetchSHDPrice = async function () {
     try {
@@ -13,12 +8,10 @@ window.fetchSHDPrice = async function () {
             oracleKey: 'SHD',
         });
         
-        // Format the rate for display, assuming `rate` needs division for decimal precision.
         const rateFormatted = (parseFloat(priceData.rate) / 1e18).toFixed(2);
         console.log("Formatted SHD Price:", rateFormatted);
         return rateFormatted;
     } catch (error) {
         console.error("Error fetching SHD price:", error);
-        throw error;
     }
 };

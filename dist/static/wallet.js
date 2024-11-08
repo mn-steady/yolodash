@@ -28,7 +28,7 @@ function disconnectKeplrWallet() {
 }
 
 // Function to get the wallet address
-async function get_wallet_address() {
+export async function get_wallet_address() {
     if (window.keplr) {
         try {
             await window.keplr.enable("secret-4");

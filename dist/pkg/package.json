@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@shadeprotocol/shadejs": "^1.5.9",
+    "secretjs": "^1.12.5"
+  }
+}
