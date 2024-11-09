@@ -8,13 +8,13 @@
     <base href="/"> <!-- Needed for GitHub Pages deploy with domain name -->
     <link rel="stylesheet" href="./static/style.css">
     <link rel="icon" type="image/png" href="./static/money-bag.png">
-<link rel="modulepreload" href="/yolodash-a9631e605ad7420f.js" crossorigin=anonymous integrity="sha384-uGSO49VXyFWVBhi0PR4YRlKIHHgjaqKKL7A35SA32KxXC0pjCbG97FoQ0NnPppgI"><link rel="modulepreload" href="/snippets/yolodash-91d0f0bd585320f2/static/wallet.js" crossorigin=anonymous integrity="sha384-Zo4nWnYMGmuJLeXSTDFj24BRsU5T1wuyEEVs5G4MOF8csLpnxNQUbu7nOIEdKEWd"><link rel="modulepreload" href="/snippets/leptos_reactive-f7acfdcc44aba8c4/inline0.js" crossorigin=anonymous integrity="sha384-d8yvubxSuBtBulKXqV75Cat9GIXWqR6k5Bgu7yCoAeqNsM97ASkJwvRGESa4d7HR"><link rel="preload" href="/yolodash-a9631e605ad7420f_bg.wasm" crossorigin=anonymous integrity="sha384-IA0FqCjsFkd9oGBfLPcWFHrDjPzNX+TsJWOImFpEA7aiTWlu/4jppRjauuRVHgGX" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/yolodash-5e05a9a5cc63ecd9.js" crossorigin=anonymous integrity="sha384-XWGiCcM7A61M3yYu+esvxp9um71/IKSDNx2sg4cQdK4X0uiAvpMIDVAKKqRdpElQ"><link rel="modulepreload" href="/snippets/yolodash-91d0f0bd585320f2/static/wallet.js" crossorigin=anonymous integrity="sha384-Zo4nWnYMGmuJLeXSTDFj24BRsU5T1wuyEEVs5G4MOF8csLpnxNQUbu7nOIEdKEWd"><link rel="modulepreload" href="/snippets/leptos_reactive-f7acfdcc44aba8c4/inline0.js" crossorigin=anonymous integrity="sha384-d8yvubxSuBtBulKXqV75Cat9GIXWqR6k5Bgu7yCoAeqNsM97ASkJwvRGESa4d7HR"><link rel="modulepreload" href="/snippets/yolodash-91d0f0bd585320f2/src/shade-import.js" crossorigin=anonymous integrity="sha384-uAVx2O5FMdZLvKd3NOGHIbm2BLLvkmYHe6uYEaVHDQTU4fV3sOmub4my/ix6R7l2"><link rel="preload" href="/yolodash-5e05a9a5cc63ecd9_bg.wasm" crossorigin=anonymous integrity="sha384-JTq4pwgXiH7M64U8AYjUmMjTKEBxU4Agyf9MyJQcQBpHGtQGyxxSqMb8LTJLo6PV" as="fetch" type="application/wasm"></head>
 <body>
     <div id="app"></div>
 
     <!-- Load shade.bundle.js as a standard script -->
     <script src="./static/lib/shade/shade.bundle.js"></script>
-    <script src="./static/wallet.js"></script>
+    <script type="module" src="./static/wallet.js"></script>
 
     <!-- Initialize the Rust WASM module -->
     <script type="module">
@@ -22,9 +22,9 @@
         init();
     </script>    
 
-<script type="module" nonce="QqZyx151vNO0rRQn4ilhIg==">
-import init, * as bindings from '/yolodash-a9631e605ad7420f.js';
-const wasm = await init('/yolodash-a9631e605ad7420f_bg.wasm');
+<script type="module" nonce="K/DmjNGOoGSa9qkNEtiwfA==">
+import init, * as bindings from '/yolodash-5e05a9a5cc63ecd9.js';
+const wasm = await init('/yolodash-5e05a9a5cc63ecd9_bg.wasm');
 
 
 window.wasmBindings = bindings;

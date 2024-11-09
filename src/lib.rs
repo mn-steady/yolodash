@@ -2,6 +2,9 @@ use leptos::*;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use wasm_bindgen::JsValue;
+use std::collections::HashMap;
+use gloo_utils::format::JsValueSerdeExt;
+use serde_json::Value; // Use serde_json for JSON deserialization
 
 // Bind the JavaScript function get_wallet_address using wasm_bindgen
 #[wasm_bindgen(module = "/static/wallet.js")]
@@ -10,56 +13,70 @@ extern "C" {
     async fn get_wallet_address() -> JsValue;
 }
 
+// Bind JavaScript functions for fetching prices
+#[wasm_bindgen(module = "/src/shade-import.js")]
+extern "C" {
+    #[wasm_bindgen]
+    async fn fetchSHDPrice() -> JsValue;
+
+    #[wasm_bindgen]
+    async fn fetchBatchPrices() -> JsValue;
+}
+
 // Fetch wallet address asynchronously
 async fn fetch_wallet_address(set_wallet_address: WriteSignal<String>) {
-    web_sys::console::log_1(&"Calling get_wallet_address...".into());
     match get_wallet_address().await.as_string() {
         Some(address) => {
-            web_sys::console::log_1(&format!("Wallet address: {}", address).into());
             set_wallet_address.set(address);
         }
         None => {
-            web_sys::console::log_1(&"Failed to load wallet address".into());
             set_wallet_address.set("Failed to load wallet address".to_string());
         }
     }
 }
 
-// Function to fetch the SHD price from the Oracle contract
+// Fetch SHD price asynchronously
 async fn fetch_shd_price(set_shd_price: WriteSignal<String>) {
-    let window = web_sys::window().expect("no global `window` exists");
-    let func = js_sys::Reflect::get(&window, &JsValue::from_str("fetchSHDPrice"))
-        .expect("fetchSHDPrice function not found")
-        .dyn_into::<js_sys::Function>()
-        .expect("fetchSHDPrice is not a function");
-
-    // Call the JavaScript function, expecting a Promise
-    let promise = func.call0(&JsValue::NULL)
-        .expect("Error invoking fetchSHDPrice")
-        .dyn_into::<js_sys::Promise>()
-        .expect("Expected a Promise from fetchSHDPrice");
-
-    match wasm_bindgen_futures::JsFuture::from(promise).await {
-        Ok(price) => {
-            if let Some(price_str) = price.as_string() {
-                set_shd_price.set(format!("SHD = ${}", price_str));
-            } else {
-                set_shd_price.set("Price data unavailable".to_string());
-            }
+    match fetchSHDPrice().await.as_string() {
+        Some(price_str) => {
+            set_shd_price.set(format!("SHD = ${}", price_str));
         }
-        Err(err) => {
-            web_sys::console::error_1(&err);
-            set_shd_price.set("Error fetching SHD price".to_string());
+        None => {
+            set_shd_price.set("Price data unavailable".to_string());
         }
     }
 }
 
-// The main app component
+// Fetch batch prices asynchronously
+async fn fetch_batch_prices(set_prices: WriteSignal<HashMap<String, String>>) {
+    let result = fetchBatchPrices().await;
+
+    match result.into_serde::<HashMap<String, Value>>() {
+        Ok(js_prices) => {
+            let mut prices = HashMap::new();
+            for (key, value) in js_prices {
+                if let Some(price_str) = value.as_str() {
+                    prices.insert(key, format!("${}", price_str));
+                } else {
+                    prices.insert(key, "Error fetching price".to_string());
+                }
+            }
+            set_prices.set(prices);
+        }
+        Err(_) => {
+            web_sys::console::error_1(&"Failed to parse batch prices".into());
+            set_prices.set(HashMap::new());
+        }
+    }
+}
+
+// Main app component
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
     let (is_connected, set_connected) = create_signal(cx, false);
     let (wallet_address, set_wallet_address) = create_signal(cx, String::from("Not connected"));
     let (shd_price, set_shd_price) = create_signal(cx, String::from("Loading SHD price..."));
+    let (prices, set_prices) = create_signal(cx, HashMap::new());
     let (selected_section, set_selected_section) = create_signal(cx, "Shade".to_string());
 
     let connect_wallet = move |_| {
@@ -76,7 +93,10 @@ pub fn App(cx: Scope) -> impl IntoView {
         spawn_local(fetch_shd_price(set_shd_price.clone()));
     };
 
-    // UI with views
+    let refresh_batch_prices = move |_| {
+        spawn_local(fetch_batch_prices(set_prices.clone()));
+    };
+
     view! {
         cx,
         <div class="container">
@@ -97,40 +117,29 @@ pub fn App(cx: Scope) -> impl IntoView {
                 }}
             </div>
             <hr class="gold-line" />
-            <div class="links-wallet-container">
-                <div class="links">
-                    <button class="link-button" on:click=move |_| set_selected_section.set("Home".to_string())>"Home"</button>
-                    <button class="link-button" on:click=move |_| set_selected_section.set("Shade".to_string())>"Shade"</button>
-                </div>
-                <div class="wallet-address">
-                    {move || if is_connected.get() {
-                        view! { cx, 
-                            <span>"SCRT Address: " {wallet_address.get()}</span>
-                        }
-                    } else {
-                        view! { cx, 
-                            <span>{wallet_address.get()}</span>
-                        }
-                    }}
-                </div>
+            <div class="wallet-address">
+                {move || if is_connected.get() {
+                    view! { cx, 
+                        <span>"SCRT Address: " {wallet_address.get()}</span>
+                    }
+                } else {
+                    view! { cx, 
+                        <span>{wallet_address.get()}</span>
+                    }
+                }}
             </div>
             <hr class="gold-line" />
-
-            {move || if selected_section.get() == "Home" {
-                view! { cx, 
-                    <div>
-                        <img src="./static/mn-steady.png" class="main-page-image" alt="Main Page Image" />
-                    </div>
-                }
-            } else {
-                view! {
-                    cx,
-                    <div class="section-content">
-                        <div id="shd-price" class="price-display">{shd_price.get()}</div>
-                        <button class="refresh-price" on:click=refresh_price>"Refresh SHD Price"</button>
-                    </div>
-                }                                                 
-            }}
+            <div class="section-content">
+                <div id="shd-price" class="price-display">{shd_price.get()}</div>
+                <button class="refresh-price" on:click=refresh_price>"Refresh SHD Price"</button>
+                <hr class="gold-line" />
+                <button class="refresh-price" on:click=refresh_batch_prices>"Refresh Batch Prices"</button>
+                <div class="price-display">
+                    <p>{format!("SHD: ${}", prices.get().get("SHD").unwrap_or(&"Loading...".to_string()))}</p>
+                    <p>{format!("ETH: ${}", prices.get().get("ETH").unwrap_or(&"Loading...".to_string()))}</p>
+                    <p>{format!("BTC: ${}", prices.get().get("BTC").unwrap_or(&"Loading...".to_string()))}</p>
+                </div>
+            </div>
         </div>
     }
 }
