@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoloDash</title>
+    <base href="/"> <!-- Needed for GitHub Pages deploy with domain name -->
+    <link rel="stylesheet" href="./static/style.css">
+    <link rel="icon" type="image/png" href="./static/money-bag.png">
+<link rel="modulepreload" href="/yolodash-a248efa9feb0f450.js" crossorigin=anonymous integrity="sha384-7F8S/bSBTD1VgouEha3AkcOOlPbxFrlcPIWs+4mtKMxg1kUQq3a4yPOIRj6IC5HH"><link rel="modulepreload" href="/snippets/leptos_reactive-f7acfdcc44aba8c4/inline0.js" crossorigin=anonymous integrity="sha384-d8yvubxSuBtBulKXqV75Cat9GIXWqR6k5Bgu7yCoAeqNsM97ASkJwvRGESa4d7HR"><link rel="modulepreload" href="/snippets/yolodash-91d0f0bd585320f2/src/shade-import.js" crossorigin=anonymous integrity="sha384-uAVx2O5FMdZLvKd3NOGHIbm2BLLvkmYHe6uYEaVHDQTU4fV3sOmub4my/ix6R7l2"><link rel="modulepreload" href="/snippets/yolodash-91d0f0bd585320f2/static/wallet.js" crossorigin=anonymous integrity="sha384-Zo4nWnYMGmuJLeXSTDFj24BRsU5T1wuyEEVs5G4MOF8csLpnxNQUbu7nOIEdKEWd"><link rel="preload" href="/yolodash-a248efa9feb0f450_bg.wasm" crossorigin=anonymous integrity="sha384-mSzcRE8ewlRhFBR10PZFUElNmQbQJvpWNf3K1R4QBnwCalwe52DGm9/zbfusWC81" as="fetch" type="application/wasm"></head>
+<body>
+    <div id="app"></div>
+
+    <!-- Load shade.bundle.js as a standard script -->
+    <script src="./static/lib/shade/shade.bundle.js"></script>
+    <script type="module" src="./static/wallet.js"></script>
+
+    <!-- Initialize the Rust WASM module -->
+    <script type="module">
+        import init from './dist/pkg/yolodash.js';
+        init();
+    </script>    
+
+<script type="module" nonce="dO/Kq1FAF2yXQ6AKjsFiXA==">
+import init, * as bindings from '/yolodash-a248efa9feb0f450.js';
+const wasm = await init({ module_or_path: '/yolodash-a248efa9feb0f450_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+</html>
